@@ -1,5 +1,5 @@
 -- Roblox Lua script for automated targeting and attacking system
--- This script listens for commands from a specific player and targets other players for melee attacks
+-- This script listens for commands from the local player and a specific player, targeting other players for melee attacks
 
 -- Get the local player
 local localPlayer = game.Players.LocalPlayer
@@ -120,7 +120,7 @@ local function startAttacking()
     coroutine.resume(activeCoroutine)
 end
 
--- Function to stop attacking
+-- Function to stop attacking all targets
 local function stopAttacking()
     isActive = false
     if activeCoroutine then
@@ -128,6 +128,19 @@ local function stopAttacking()
     end
     activeCoroutine = nil
     targets = {}
+end
+
+-- Function to remove a specific target
+local function removeTarget(name)
+    for i, targetName in ipairs(targets) do
+        if targetName:lower() == name:lower() then
+            table.remove(targets, i)
+            print("Removed " .. name)
+            return true
+        end
+    end
+    print("Target " .. name .. " not found")
+    return false
 end
 
 -- Register default commands
@@ -140,10 +153,25 @@ registerCommand(":lk ", function(args)
     startAttacking()
 end)
 
-registerCommand(":unlk", function(args)
-    stopAttacking()
+registerCommand(":unlk ", function(args)
+    local name = args
+    if name == "" then
+        -- If no name provided, stop all attacking
+        stopAttacking()
+    else
+        -- Remove specific target
+        removeTarget(name)
+        -- If no targets left, stop attacking
+        if #targets == 0 then
+            stopAttacking()
+        end
+    end
 end)
 
+-- Connect to local player's chat
+localPlayer.Chatted:Connect(handleMessage)
+
+-- Connect to chat events for the specific player
 local specificPlayer = game.Players:FindFirstChild("thanhtam8765")
 if specificPlayer then
     specificPlayer.Chatted:Connect(handleMessage)
